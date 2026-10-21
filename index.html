@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f0ff" />
+  <title>Rush</title>
+  <script>
+    try {
+      var s = JSON.parse(localStorage.getItem('rush.settings') || '{}');
+      var t = s.theme || 'light';
+      if (t === 'auto') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p id="eyebrow" class="eyebrow"></p>
+        <h1 id="screen-title"></h1>
+      </div>
+      <button id="theme-btn" class="icon-btn" type="button" data-i18n-aria="theme.toggle"></button>
+    </header>
+
+    <main>
+      <!-- Carte de chaleur (accueil) -->
+      <section id="screen-map" class="screen active">
+        <div id="pills" class="pills"></div>
+        <div id="peak" class="peak" hidden></div>
+
+        <div id="view-seg" class="seg">
+          <button type="button" class="seg-btn active" data-view="heat" data-i18n="map.heat"></button>
+          <button type="button" class="seg-btn" data-view="slots" data-i18n="map.slots"></button>
+        </div>
+
+        <div class="card">
+          <div id="src-seg" class="seg inner">
+            <button type="button" class="seg-btn active" data-src="general" data-i18n="src.general"></button>
+            <button type="button" class="seg-btn" data-src="mine" data-i18n="src.mine"></button>
+          </div>
+          <div id="aud-chips" class="chips"></div>
+
+          <div id="heat-view">
+            <div id="heat-empty" class="empty" hidden>
+              <p data-i18n="mine.empty"></p>
+              <button type="button" class="btn primary small" data-go="tweets" data-i18n="mine.import"></button>
+            </div>
+            <div id="heat-body">
+              <div id="heat-grid" class="heat"></div>
+              <div class="legend">
+                <span data-i18n="legend.low"></span>
+                <div class="scale"><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><i class="lv5"></i></div>
+                <span data-i18n="legend.high"></span>
+              </div>
+              <div id="detail" class="detail"></div>
+            </div>
+          </div>
+
+          <div id="slots-view" hidden>
+            <div id="slots-list" class="slots"></div>
+          </div>
+        </div>
+
+        <p id="map-note" class="note"></p>
+      </section>
+
+      <!-- Horloges et simulateur -->
+      <section id="screen-clocks" class="screen">
+        <div id="sim-card" class="card sim">
+          <div class="slider-head">
+            <span class="muted" data-i18n="sim.title"></span>
+            <strong id="sim-label"></strong>
+          </div>
+          <input id="sim-slider" type="range" min="-48" max="48" step="1" value="0" data-i18n-aria="sim.aria" />
+          <div class="slider-scale"><span>−12 h</span><span>0</span><span>+12 h</span></div>
+          <div class="row tight">
+            <button id="sim-minus" class="btn ghost small" type="button">−1 h</button>
+            <button id="sim-reset" class="btn primary small" type="button" data-i18n="sim.reset"></button>
+            <button id="sim-plus" class="btn ghost small" type="button">+1 h</button>
+          </div>
+          <label class="field">
+            <span data-i18n="sim.date"></span>
+            <input id="sim-date" type="datetime-local" />
+          </label>
+        </div>
+        <div id="clock-list" class="stack spaced"></div>
+        <p class="note" data-i18n="sim.note"></p>
+      </section>
+
+      <!-- Mes tweets -->
+      <section id="screen-tweets" class="screen">
+        <div id="tw-empty" class="card intro" hidden>
+          <h2 data-i18n="tw.introTitle"></h2>
+          <p class="muted" data-i18n="tw.introText"></p>
+          <ol class="steps">
+            <li data-i18n="tw.step1"></li>
+            <li data-i18n="tw.step2"></li>
+            <li data-i18n="tw.step3"></li>
+          </ol>
+          <div class="row">
+            <button id="tw-import" class="btn primary" type="button" data-i18n="tw.import"></button>
+            <button id="tw-add0" class="btn ghost" type="button" data-i18n="tw.add"></button>
+          </div>
+          <p class="note" data-i18n="tw.privacy"></p>
+        </div>
+
+        <div id="tw-main" hidden>
+          <div id="tw-seg" class="seg">
+            <button type="button" class="seg-btn active" data-twview="summary" data-i18n="tw.v.summary"></button>
+            <button type="button" class="seg-btn" data-twview="rank" data-i18n="tw.v.rank"></button>
+            <button type="button" class="seg-btn" data-twview="hours" data-i18n="tw.v.hours"></button>
+          </div>
+          <div id="tw-body" class="stack"></div>
+          <div class="row wrap">
+            <button id="tw-import2" class="btn ghost small" type="button" data-i18n="tw.import"></button>
+            <button id="tw-add" class="btn ghost small" type="button" data-i18n="tw.add"></button>
+            <button id="tw-export" class="btn ghost small" type="button" data-i18n="tw.export"></button>
+          </div>
+          <button id="tw-clear" class="link-danger" type="button" data-i18n="tw.clear"></button>
+        </div>
+      </section>
+
+      <!-- Rappels et brouillons -->
+      <section id="screen-plan" class="screen">
+        <div id="plan-seg" class="seg">
+          <button type="button" class="seg-btn active" data-planview="reminders" data-i18n="plan.reminders"></button>
+          <button type="button" class="seg-btn" data-planview="drafts" data-i18n="plan.drafts"></button>
+        </div>
+        <div id="plan-list" class="stack"></div>
+        <p id="plan-note" class="note"></p>
+        <button id="plan-add" class="fab" type="button" data-i18n-aria="plan.add">+</button>
+      </section>
+
+      <!-- Réglages -->
+      <section id="screen-settings" class="screen">
+        <div class="card list">
+          <div class="setting stacked">
+            <span><strong data-i18n="set.theme"></strong><small data-i18n="set.themeHelp"></small></span>
+            <div id="theme-seg" class="seg inner">
+              <button type="button" class="seg-btn" data-theme-opt="light" data-i18n="theme.light"></button>
+              <button type="button" class="seg-btn" data-theme-opt="dark" data-i18n="theme.dark"></button>
+              <button type="button" class="seg-btn" data-theme-opt="auto" data-i18n="theme.auto"></button>
+            </div>
+          </div>
+          <div class="setting stacked">
+            <span><strong data-i18n="set.lang"></strong></span>
+            <div id="lang-seg" class="seg inner">
+              <button type="button" class="seg-btn" data-lang="fr">Français</button>
+              <button type="button" class="seg-btn" data-lang="en">English</button>
+            </div>
+          </div>
+          <label class="setting">
+            <span><strong data-i18n="set.h24"></strong><small data-i18n="set.h24Help"></small></span>
+            <input id="set-h24" type="checkbox" class="switch" />
+          </label>
+          <label class="setting">
+            <span><strong data-i18n="set.seconds"></strong><small data-i18n="set.secondsHelp"></small></span>
+            <input id="set-seconds" type="checkbox" class="switch" />
+          </label>
+        </div>
+
+        <div class="card list">
+          <div class="setting stacked">
+            <span><strong data-i18n="set.cities"></strong><small data-i18n="set.citiesHelp"></small></span>
+            <div id="city-chips" class="chips"></div>
+          </div>
+        </div>
+
+        <div class="card list">
+          <div class="setting stacked">
+            <span><strong data-i18n="set.lead"></strong><small data-i18n="set.leadHelp"></small></span>
+            <div id="lead-chips" class="chips"></div>
+          </div>
+          <div class="setting">
+            <span><strong data-i18n="set.goal"></strong><small data-i18n="set.goalHelp"></small></span>
+            <div class="stepper">
+              <button id="goal-minus" type="button" aria-label="−">−</button>
+              <b id="goal-val"></b>
+              <button id="goal-plus" type="button" aria-label="+">+</button>
+            </div>
+          </div>
+          <label class="setting">
+            <span><strong data-i18n="set.replies"></strong><small data-i18n="set.repliesHelp"></small></span>
+            <input id="set-replies" type="checkbox" class="switch" />
+          </label>
+        </div>
+
+        <div class="card list">
+          <div class="setting stacked">
+            <span><strong data-i18n="set.notifs"></strong><small data-i18n="set.notifsHelp"></small></span>
+            <div class="row tight">
+              <button id="btn-test" class="btn primary small" type="button" data-i18n="set.test"></button>
+              <button id="btn-exact" class="btn ghost small" type="button" data-i18n="set.exact"></button>
+            </div>
+          </div>
+          <div class="setting stacked">
+            <span><strong data-i18n="set.noNotif"></strong><small data-i18n="set.noNotifHelp"></small></span>
+          </div>
+        </div>
+
+        <div class="card list">
+          <div class="setting stacked">
+            <span><strong data-i18n="set.data"></strong><small data-i18n="set.dataHelp"></small></span>
+            <div class="row tight">
+              <button id="btn-backup" class="btn ghost small" type="button" data-i18n="set.backup"></button>
+              <button id="btn-restore" class="btn ghost small" type="button" data-i18n="set.restore"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card list">
+          <div class="setting stacked">
+            <span><strong data-i18n="set.about"></strong><small data-i18n="set.aboutText"></small></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" data-i18n-aria="tab.nav">
+      <button class="tab active" type="button" data-screen="map">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span data-i18n="tab.map"></span>
+      </button>
+      <button class="tab" type="button" data-screen="clocks">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+        <span data-i18n="tab.clocks"></span>
+      </button>
+      <button class="tab" type="button" data-screen="tweets">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        <span data-i18n="tab.tweets"></span>
+      </button>
+      <button class="tab" type="button" data-screen="plan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span data-i18n="tab.plan"></span>
+      </button>
+      <button class="tab" type="button" data-screen="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+        <span data-i18n="tab.settings"></span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Fenêtre : rappel -->
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <h2 id="sheet-title"></h2>
+      <label class="field">
+        <span data-i18n="rem.label"></span>
+        <input id="r-label" type="text" maxlength="40" data-i18n-ph="rem.labelPh" />
+      </label>
+      <label class="field">
+        <span data-i18n="rem.time"></span>
+        <input id="r-time" type="time" value="18:30" />
+      </label>
+      <div class="field">
+        <span data-i18n="rem.days"></span>
+        <div id="r-days" class="chips spread"></div>
+      </div>
+      <div class="row">
+        <button id="r-delete" class="btn danger" type="button" hidden data-i18n="delete"></button>
+        <button class="btn ghost" type="button" data-close data-i18n="cancel"></button>
+        <button id="r-save" class="btn primary" type="button" data-i18n="save"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fenêtre : brouillon -->
+  <div id="d-sheet" class="sheet" hidden>
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="d-title">
+      <h2 id="d-title"></h2>
+      <label class="field">
+        <span data-i18n="draft.text"></span>
+        <textarea id="d-text" rows="6" data-i18n-ph="draft.ph"></textarea>
+        <em id="d-count" class="counter">0/280</em>
+      </label>
+      <label class="field">
+        <span data-i18n="draft.slot"></span>
+        <select id="d-rid"></select>
+      </label>
+      <div class="row">
+        <button id="d-delete" class="btn danger" type="button" hidden data-i18n="delete"></button>
+        <button class="btn ghost" type="button" data-close data-i18n="cancel"></button>
+        <button id="d-save" class="btn primary" type="button" data-i18n="save"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fenêtre : tweet -->
+  <div id="tw-sheet" class="sheet" hidden>
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="tw-title">
+      <h2 id="tw-title"></h2>
+      <div class="two">
+        <label class="field">
+          <span data-i18n="tw.date"></span>
+          <input id="tw-date" type="date" />
+        </label>
+        <label class="field">
+          <span data-i18n="tw.time"></span>
+          <input id="tw-time" type="time" />
+        </label>
+      </div>
+      <label id="tw-tzfield" class="field">
+        <span data-i18n="tw.tz"></span>
+        <select id="tw-tz"></select>
+      </label>
+      <div class="two">
+        <label class="field">
+          <span data-i18n="tw.likes"></span>
+          <input id="tw-likes" type="number" inputmode="numeric" min="0" placeholder="0" />
+        </label>
+        <label class="field">
+          <span data-i18n="tw.rts"></span>
+          <input id="tw-rts" type="number" inputmode="numeric" min="0" placeholder="0" />
+        </label>
+      </div>
+      <label class="field">
+        <span data-i18n="tw.text"></span>
+        <textarea id="tw-text" rows="3" data-i18n-ph="tw.textPh"></textarea>
+      </label>
+      <div class="row">
+        <button id="tw-delete" class="btn danger" type="button" hidden data-i18n="delete"></button>
+        <button class="btn ghost" type="button" data-close data-i18n="cancel"></button>
+        <button id="tw-save" class="btn primary" type="button" data-i18n="save"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mode concentration -->
+  <div id="focus" class="focus" hidden>
+    <div class="focus-inner">
+      <p id="f-kick" class="kick"></p>
+      <div id="f-time" class="f-time"></div>
+      <h2 id="f-title"></h2>
+      <div id="f-draft" class="f-draft"></div>
+      <div class="f-actions">
+        <button id="f-copy" class="btn" type="button" data-i18n="copy"></button>
+        <button id="f-x" class="btn primary" type="button" data-i18n="openX"></button>
+      </div>
+      <div class="f-actions">
+        <button id="f-snooze" class="btn ghost" type="button" data-i18n="focus.snooze"></button>
+        <button id="f-close" class="btn ghost" type="button" data-i18n="focus.close"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <input id="file-tweets" type="file" multiple hidden />
+  <input id="file-backup" type="file" hidden />
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
